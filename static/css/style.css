@@ -396,6 +396,23 @@ footer {
     font-weight: 600;
 }
 
+/* Navigation Buttons */
+.d-flex.gap-2 {
+    gap: 0.5rem !important;
+}
+
+.btn-outline-primary:hover {
+    background-color: #007bff;
+    border-color: #007bff;
+    color: #fff;
+}
+
+.btn-outline-secondary:hover {
+    background-color: #6c757d;
+    border-color: #6c757d;
+    color: #fff;
+}
+
 /* Utility Classes */
 .text-gradient {
     background: linear-gradient(135deg, #007bff 0%, #0056b3 100%);

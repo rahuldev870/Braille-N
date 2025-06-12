@@ -5,10 +5,13 @@
 {% block content %}
 <section class="py-5">
     <div class="container">
-        <!-- Back Button -->
-        <div class="mb-4">
+        <!-- Navigation Buttons -->
+        <div class="mb-4 d-flex gap-2 flex-wrap">
+            <button onclick="history.back()" class="btn btn-outline-primary">
+                <i class="fas fa-chevron-left me-2"></i>Back
+            </button>
             <a href="{{ url_for('index') }}" class="btn btn-outline-secondary">
-                <i class="fas fa-arrow-left me-2"></i>Back to Homepage
+                <i class="fas fa-home me-2"></i>Back to Homepage
             </a>
         </div>
         
