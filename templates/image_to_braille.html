@@ -78,7 +78,8 @@
                             <!-- Extracted Text -->
                             <div class="mb-4">
                                 <label class="form-label fw-bold">Extracted Text:</label>
-                                <div id="extractedText" class="extracted-text p-3 bg-light rounded border">
+                                <div id="extractedText" class="extracted-text p-3 bg-white rounded border" style="color: #212529; font-weight: 500; min-height: 80px;">
+                                    <span class="text-muted">Extracted text will appear here...</span>
                                 </div>
                                 <div class="mt-2">
                                     <button id="readExtractedBtn" class="btn btn-outline-success" disabled>
@@ -250,12 +251,15 @@ class ImageToBrailleConverter {
     }
     
     displayResults(data) {
-        // Display extracted text
+        // Clear any placeholder text and display extracted text with proper styling
+        this.extractedText.innerHTML = '';
+        this.extractedText.style.color = '#212529';
+        this.extractedText.style.fontWeight = '500';
         this.extractedText.textContent = data.extracted_text;
         this.readExtractedBtn.disabled = false;
         
-        // Display Braille output
-        this.brailleOutput.innerHTML = `<span class="braille-text">${data.braille_text}</span>`;
+        // Display Braille output with enhanced visibility
+        this.brailleOutput.innerHTML = `<span class="braille-text" style="color: #007bff; font-size: 24px; font-weight: bold;">${data.braille_text}</span>`;
         
         // Show character mapping
         this.displayCharacterMapping(data.extracted_text, data.braille_text);
