@@ -13,6 +13,14 @@ logging.basicConfig(level=logging.DEBUG)
 app = Flask(__name__)
 app.secret_key = os.environ.get("SESSION_SECRET", "braille-world-secret-key-2024")
 
+# Configure for different deployment environments
+if 'DYNO' in os.environ:  # Heroku
+    app.config['SERVER_NAME'] = None
+elif 'RENDER' in os.environ:  # Render
+    app.config['SERVER_NAME'] = None
+else:  # Local development
+    app.config['SERVER_NAME'] = None
+
 # Configure upload settings
 UPLOAD_FOLDER = 'uploads'
 ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif', 'bmp', 'tiff'}
@@ -36,14 +44,51 @@ BRAILLE_MAP = {
     '-': '⠤', '(': '⠐⠣', ')': '⠐⠜', '"': '⠐⠦'
 }
 
-# Hindi to Braille mapping (basic implementation)
+# Hindi to Braille mapping (comprehensive implementation with matras)
 HINDI_BRAILLE_MAP = {
-    'अ': '⠁', 'आ': '⠜', 'इ': '⠊', 'ई': '⠔', 'उ': '⠥', 'ऊ': '⠳', 'ए': '⠑', 'ऐ': '⠌',
-    'ओ': '⠕', 'औ': '⠪', 'क': '⠅', 'ख': '⠨⠅', 'ग': '⠛', 'घ': '⠨⠛', 'च': '⠉', 'छ': '⠨⠉',
-    'ज': '⠚', 'झ': '⠨⠚', 'ट': '⠞', 'ठ': '⠨⠞', 'ड': '⠙', 'ढ': '⠨⠙', 'त': '⠞', 'थ': '⠹',
-    'द': '⠙', 'ध': '⠮', 'न': '⠝', 'प': '⠏', 'फ': '⠋', 'ब': '⠃', 'भ': '⠨⠃', 'म': '⠍',
-    'य': '⠽', 'र': '⠗', 'ल': '⠇', 'व': '⠧', 'श': '⠩', 'ष': '⠯', 'स': '⠎', 'ह': '⠓',
-    ' ': '⠀', '।': '⠲', ',': '⠂'
+    # Vowels (स्वर)
+    'अ': '⠁', 'आ': '⠜', 'इ': '⠊', 'ई': '⠔', 'उ': '⠥', 'ऊ': '⠳', 
+    'ए': '⠑', 'ऐ': '⠌', 'ओ': '⠕', 'औ': '⠪', 'ऋ': '⠐⠗',
+    
+    # Consonants (व्यंजन) - Ka group
+    'क': '⠅', 'ख': '⠨⠅', 'ग': '⠛', 'घ': '⠨⠛', 'ङ': '⠰⠛',
+    
+    # Cha group
+    'च': '⠉', 'छ': '⠨⠉', 'ज': '⠚', 'झ': '⠨⠚', 'ञ': '⠰⠚',
+    
+    # Ta group (retroflex)
+    'ट': '⠞', 'ठ': '⠨⠞', 'ड': '⠙', 'ढ': '⠨⠙', 'ण': '⠰⠙',
+    
+    # Ta group (dental)
+    'त': '⠞', 'थ': '⠹', 'द': '⠙', 'ध': '⠮', 'न': '⠝',
+    
+    # Pa group
+    'प': '⠏', 'फ': '⠋', 'ब': '⠃', 'भ': '⠨⠃', 'म': '⠍',
+    
+    # Ya group
+    'य': '⠽', 'र': '⠗', 'ल': '⠇', 'व': '⠧',
+    
+    # Sha group
+    'श': '⠩', 'ष': '⠯', 'स': '⠎', 'ह': '⠓',
+    
+    # Additional consonants
+    'क्ष': '⠅⠩', 'त्र': '⠞⠗', 'ज्ञ': '⠚⠰⠝',
+    
+    # Matras (vowel signs)
+    'ा': '⠜', 'ि': '⠊', 'ी': '⠔', 'ु': '⠥', 'ू': '⠳', 
+    'े': '⠑', 'ै': '⠌', 'ो': '⠕', 'ौ': '⠪', 'ृ': '⠐⠗',
+    
+    # Special characters
+    'ं': '⠰⠍', 'ः': '⠰⠓', '्': '⠈', 'ँ': '⠐⠍',
+    
+    # Numbers
+    '०': '⠚', '१': '⠁', '२': '⠃', '३': '⠉', '४': '⠙',
+    '५': '⠑', '६': '⠋', '७': '⠛', '८': '⠓', '९': '⠊',
+    
+    # Punctuation
+    ' ': '⠀', '।': '⠲', ',': '⠂', '.': '⠲', '?': '⠦', 
+    '!': '⠖', ':': '⠒', ';': '⠆', '-': '⠤', '"': '⠐⠦',
+    '(': '⠐⠣', ')': '⠐⠜', '[': '⠨⠣', ']': '⠨⠜'
 }
 
 def allowed_file(filename):
@@ -57,14 +102,40 @@ def text_to_braille(text, language='english'):
         return ""
     
     braille_text = ""
-    text = text.lower()
     
     if language == 'english':
+        text = text.lower()
         for char in text:
             braille_text += BRAILLE_MAP.get(char, char)
     else:  # Hindi
-        for char in text:
-            braille_text += HINDI_BRAILLE_MAP.get(char, char)
+        # Process Hindi text character by character, preserving original case
+        i = 0
+        while i < len(text):
+            char = text[i]
+            
+            # Check for compound characters first (क्ष, त्र, ज्ञ)
+            if i < len(text) - 2:
+                three_char = text[i:i+3]
+                if three_char in HINDI_BRAILLE_MAP:
+                    braille_text += HINDI_BRAILLE_MAP[three_char]
+                    i += 3
+                    continue
+            
+            # Check for two-character combinations
+            if i < len(text) - 1:
+                two_char = text[i:i+2]
+                if two_char in HINDI_BRAILLE_MAP:
+                    braille_text += HINDI_BRAILLE_MAP[two_char]
+                    i += 2
+                    continue
+            
+            # Single character mapping
+            if char in HINDI_BRAILLE_MAP:
+                braille_text += HINDI_BRAILLE_MAP[char]
+            else:
+                # If character not found, preserve it
+                braille_text += char
+            i += 1
     
     return braille_text
 
@@ -151,11 +222,14 @@ def upload_image_api():
         if file.filename == '':
             return jsonify({'error': 'No file selected'}), 400
         
-        if not allowed_file(file.filename):
+        if file.filename and not allowed_file(file.filename):
             return jsonify({'error': 'Invalid file type. Please upload an image file.'}), 400
         
         # Save uploaded file
-        filename = secure_filename(file.filename)
+        if file.filename:
+            filename = secure_filename(file.filename)
+        else:
+            filename = 'uploaded_image.png'
         filepath = os.path.join(app.config['UPLOAD_FOLDER'], filename)
         file.save(filepath)
         
