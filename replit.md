@@ -9,7 +9,7 @@ A comprehensive Flask-based Braille accessibility web application with text-to-B
 - **Created standalone JavaScript modules**: `text_to_braille.js` and `image_to_braille.js`
 - **Implemented multi-language support**: Dynamic switching between English (`en-US`) and Hindi (`hi-IN`)
 - **Added client-side TTS**: Removed backend dependency for Text-to-Speech functionality
-- **Enhanced microphone support**: Added voice input to image-to-braille service
+- **Microphone support**: Voice input available in text-to-braille service only
 - **Android WebView compatibility**: Native TTS and microphone permission handling
 
 ### Key Features Implemented
@@ -25,8 +25,8 @@ A comprehensive Flask-based Braille accessibility web application with text-to-B
    - Improved error handling and user feedback
    - Android WebView permission management
 
-3. **Microphone Support Added to Image Service**:
-   - Voice input for text processing
+3. **Microphone Support in Text Service**:
+   - Voice input for text processing (text-to-braille service only)
    - Language-aware speech recognition
    - Visual feedback for voice status
    - Seamless integration with existing UI

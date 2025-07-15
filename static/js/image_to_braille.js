@@ -1,6 +1,6 @@
 /**
- * Enhanced Image to Braille Converter with microphone support and client-side TTS
- * Supports: Chrome, Android WebView, Hindi/English TTS and Speech Recognition
+ * Enhanced Image to Braille Converter with client-side TTS
+ * Supports: Chrome, Android WebView, Hindi/English TTS
  */
 
 class ImageToBrailleConverter {
@@ -22,14 +22,8 @@ class ImageToBrailleConverter {
         this.errorDisplay = document.getElementById('errorDisplay');
         this.errorMessage = document.getElementById('errorMessage');
         
-        // Add microphone elements
-        this.micButton = this.createMicrophoneButton();
-        this.voiceStatus = this.createVoiceStatusElement();
-        
-        // Language and speech support
+        // Language support
         this.currentLanguage = 'english';
-        this.recognition = null;
-        this.isListening = false;
         
         // TTS systems
         this.synth = window.speechSynthesis;
@@ -37,7 +31,6 @@ class ImageToBrailleConverter {
         this.selectedFile = null;
         
         this.initializeEvents();
-        this.setupSpeechRecognition();
         this.setupLanguageSelector();
     }
     
@@ -49,60 +42,15 @@ class ImageToBrailleConverter {
                typeof window.AndroidInterface.speakText === 'function';
     }
     
-    /**
-     * Create microphone button for voice input
-     */
-    createMicrophoneButton() {
-        const micButton = document.createElement('button');
-        micButton.type = 'button';
-        micButton.className = 'btn btn-outline-primary';
-        micButton.innerHTML = '<i class="fas fa-microphone"></i>';
-        micButton.title = 'Click to add text by voice';
-        micButton.id = 'micButton';
-        
-        // Add microphone button to the upload area
-        const uploadArea = document.getElementById('uploadArea');
-        const micContainer = document.createElement('div');
-        micContainer.className = 'mt-3';
-        micContainer.innerHTML = `
-            <hr class="my-3">
-            <div class="text-center">
-                <p class="mb-2"><strong>Or add text by voice:</strong></p>
-            </div>
-        `;
-        micContainer.appendChild(micButton);
-        uploadArea.appendChild(micContainer);
-        
-        return micButton;
-    }
-    
-    /**
-     * Create voice status element
-     */
-    createVoiceStatusElement() {
-        const voiceStatus = document.createElement('div');
-        voiceStatus.id = 'voiceStatus';
-        voiceStatus.className = 'alert alert-info d-none mt-3';
-        voiceStatus.innerHTML = '<i class="fas fa-microphone-alt me-2"></i><span id="voiceStatusText">Ready to listen...</span>';
-        
-        // Add after upload area
-        const uploadArea = document.getElementById('uploadArea');
-        uploadArea.parentNode.insertBefore(voiceStatus, uploadArea.nextSibling);
-        
-        return voiceStatus;
-    }
+
     
     /**
      * Initialize event listeners
      */
     initializeEvents() {
         // Upload area events
-        this.uploadArea.addEventListener('click', (e) => {
-            if (e.target === this.micButton || this.micButton.contains(e.target)) {
-                this.toggleVoiceRecognition();
-            } else {
-                this.imageInput.click();
-            }
+        this.uploadArea.addEventListener('click', () => {
+            this.imageInput.click();
         });
         
         this.uploadArea.addEventListener('dragover', (e) => this.handleDragOver(e));
@@ -116,12 +64,6 @@ class ImageToBrailleConverter {
         
         // Read aloud button
         this.readExtractedBtn.addEventListener('click', () => this.readExtractedText());
-        
-        // Microphone button
-        this.micButton.addEventListener('click', (e) => {
-            e.stopPropagation();
-            this.toggleVoiceRecognition();
-        });
     }
     
     /**
@@ -132,7 +74,6 @@ class ImageToBrailleConverter {
         languageRadios.forEach(radio => {
             radio.addEventListener('change', () => {
                 this.currentLanguage = radio.value;
-                this.updateSpeechRecognitionLanguage();
             });
         });
         
@@ -143,199 +84,9 @@ class ImageToBrailleConverter {
         }
     }
     
-    /**
-     * Setup speech recognition with multi-language support
-     */
-    setupSpeechRecognition() {
-        if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
-            const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-            this.recognition = new SpeechRecognition();
-            
-            this.recognition.continuous = false;
-            this.recognition.interimResults = true;
-            this.updateSpeechRecognitionLanguage();
-            
-            this.recognition.onstart = () => {
-                this.isListening = true;
-                this.updateMicButton();
-                this.showVoiceStatus('Listening... Speak now to add text!');
-            };
-            
-            this.recognition.onresult = (event) => {
-                let finalTranscript = '';
-                let interimTranscript = '';
-                
-                for (let i = event.resultIndex; i < event.results.length; i++) {
-                    const transcript = event.results[i][0].transcript;
-                    if (event.results[i].isFinal) {
-                        finalTranscript += transcript;
-                    } else {
-                        interimTranscript += transcript;
-                    }
-                }
-                
-                if (finalTranscript) {
-                    this.processVoiceInput(finalTranscript);
-                    this.showVoiceStatus('Voice input processed!', 'success');
-                } else {
-                    this.showVoiceStatus(`Listening... "${interimTranscript}"`);
-                }
-            };
-            
-            this.recognition.onerror = (event) => {
-                this.isListening = false;
-                this.updateMicButton();
-                let errorMessage = 'Voice recognition error';
-                
-                switch (event.error) {
-                    case 'no-speech':
-                        errorMessage = 'No speech detected. Try again.';
-                        break;
-                    case 'audio-capture':
-                        errorMessage = 'Microphone not available.';
-                        break;
-                    case 'not-allowed':
-                        errorMessage = 'Microphone permission denied.';
-                        break;
-                    case 'network':
-                        errorMessage = 'Network error. Check connection.';
-                        break;
-                    default:
-                        errorMessage = `Error: ${event.error}`;
-                }
-                
-                this.showVoiceStatus(errorMessage, 'danger');
-                setTimeout(() => this.hideVoiceStatus(), 3000);
-            };
-            
-            this.recognition.onend = () => {
-                this.isListening = false;
-                this.updateMicButton();
-                setTimeout(() => this.hideVoiceStatus(), 2000);
-            };
-        } else {
-            this.micButton.disabled = true;
-            this.micButton.title = 'Voice recognition not supported in this browser';
-        }
-    }
+
     
-    /**
-     * Update speech recognition language
-     */
-    updateSpeechRecognitionLanguage() {
-        if (this.recognition) {
-            this.recognition.lang = this.currentLanguage === 'hindi' ? 'hi-IN' : 'en-US';
-        }
-    }
-    
-    /**
-     * Toggle voice recognition
-     */
-    toggleVoiceRecognition() {
-        if (!this.recognition) return;
-        
-        if (this.isListening) {
-            this.recognition.stop();
-        } else {
-            // Request microphone permission for Android WebView
-            if (this.isAndroidWebView && typeof window.AndroidInterface.requestMicrophonePermission === 'function') {
-                window.AndroidInterface.requestMicrophonePermission();
-            }
-            this.recognition.start();
-        }
-    }
-    
-    /**
-     * Process voice input as text
-     */
-    async processVoiceInput(text) {
-        try {
-            const response = await fetch('/api/convert-text', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({
-                    text: text,
-                    language: this.currentLanguage
-                })
-            });
-            
-            const data = await response.json();
-            
-            if (data.success) {
-                this.displayVoiceResults(data.original_text, data.braille_text);
-            } else {
-                this.showError(data.error || 'Failed to convert voice input');
-            }
-        } catch (error) {
-            console.error('Voice processing error:', error);
-            this.showError('Failed to process voice input. Please try again.');
-        }
-    }
-    
-    /**
-     * Display voice input results
-     */
-    displayVoiceResults(originalText, brailleText) {
-        // Clear any placeholder text and display voice input
-        this.extractedText.innerHTML = '';
-        this.extractedText.style.color = '#212529';
-        this.extractedText.style.fontWeight = '500';
-        this.extractedText.textContent = originalText;
-        this.readExtractedBtn.disabled = false;
-        
-        // Display Braille output
-        this.brailleOutput.innerHTML = `<span class="braille-text" style="color: #007bff; font-size: 24px; font-weight: bold;">${brailleText}</span>`;
-        
-        // Show character mapping
-        this.displayCharacterMapping(originalText, brailleText);
-        
-        // Show results section
-        this.resultsSection.classList.remove('d-none');
-        
-        // Add voice input indicator
-        const voiceIndicator = document.createElement('small');
-        voiceIndicator.className = 'text-muted d-block';
-        voiceIndicator.innerHTML = '<i class="fas fa-microphone me-1"></i>Voice input';
-        this.extractedText.appendChild(voiceIndicator);
-    }
-    
-    /**
-     * Update microphone button appearance
-     */
-    updateMicButton() {
-        if (this.isListening) {
-            this.micButton.classList.add('btn-danger');
-            this.micButton.classList.remove('btn-outline-primary');
-            this.micButton.innerHTML = '<i class="fas fa-stop"></i>';
-            this.micButton.title = 'Click to stop listening';
-        } else {
-            this.micButton.classList.remove('btn-danger');
-            this.micButton.classList.add('btn-outline-primary');
-            this.micButton.innerHTML = '<i class="fas fa-microphone"></i>';
-            this.micButton.title = 'Click to add text by voice';
-        }
-    }
-    
-    /**
-     * Show voice status message
-     */
-    showVoiceStatus(message, type = 'info') {
-        const statusText = document.getElementById('voiceStatusText');
-        if (statusText) {
-            statusText.textContent = message;
-        }
-        this.voiceStatus.className = `alert alert-${type} mt-3`;
-        this.voiceStatus.classList.remove('d-none');
-    }
-    
-    /**
-     * Hide voice status message
-     */
-    hideVoiceStatus() {
-        this.voiceStatus.classList.add('d-none');
-    }
+
     
     /**
      * Handle drag over event
