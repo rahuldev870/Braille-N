@@ -1,119 +1,8 @@
-{% extends "base.html" %}
+/**
+ * Enhanced Text to Braille Converter with client-side TTS and multi-language support
+ * Supports: Chrome, Android WebView, Hindi/English TTS and Speech Recognition
+ */
 
-{% block title %}Text to Braille - Braille World{% endblock %}
-
-{% block content %}
-<section class="py-5">
-    <div class="container">
-        <!-- Navigation Buttons -->
-        <div class="mb-4 d-flex gap-2 flex-wrap">
-            <button onclick="history.back()" class="btn btn-outline-primary">
-                <i class="fas fa-chevron-left me-2"></i>Back
-            </button>
-            <a href="{{ url_for('index') }}" class="btn btn-outline-secondary">
-                <i class="fas fa-home me-2"></i>Back to Homepage
-            </a>
-        </div>
-        
-        <div class="row justify-content-center">
-            <div class="col-lg-8">
-                <div class="card shadow-lg">
-                    <div class="card-header bg-primary text-white text-center py-3">
-                        <h2 class="mb-0">
-                            <i class="fas fa-keyboard me-2"></i>Text to Braille Converter
-                        </h2>
-                    </div>
-                    
-                    <div class="card-body p-4">
-                        <!-- Language Selector -->
-                        <div class="mb-4">
-                            <label class="form-label fw-bold">Select Language:</label>
-                            <div class="btn-group w-100" role="group">
-                                <input type="radio" class="btn-check" name="language" id="englishLang" value="english" checked>
-                                <label class="btn btn-outline-primary" for="englishLang">
-                                    <i class="fas fa-flag me-2"></i>English
-                                </label>
-                                
-                                <input type="radio" class="btn-check" name="language" id="hindiLang" value="hindi">
-                                <label class="btn btn-outline-primary" for="hindiLang">
-                                    <i class="fas fa-flag me-2"></i>हिंदी (Hindi)
-                                </label>
-                            </div>
-                        </div>
-                        
-                        <!-- Input Section -->
-                        <div class="mb-4">
-                            <label for="textInput" class="form-label fw-bold">Enter Text:</label>
-                            <div class="input-group">
-                                <textarea 
-                                    id="textInput" 
-                                    class="form-control" 
-                                    rows="4" 
-                                    placeholder="Type your text here or use the microphone..."
-                                    style="resize: vertical;"
-                                ></textarea>
-                                <button 
-                                    id="micButton" 
-                                    class="btn btn-outline-primary" 
-                                    type="button"
-                                    title="Click to start voice recognition"
-                                >
-                                    <i class="fas fa-microphone"></i>
-                                </button>
-                            </div>
-                            <div class="form-text">
-                                <small class="text-muted">
-                                    <i class="fas fa-info-circle me-1"></i>
-                                    Click the microphone to use voice input
-                                </small>
-                            </div>
-                        </div>
-                        
-                        <!-- Voice Status -->
-                        <div id="voiceStatus" class="alert alert-info d-none mb-3">
-                            <i class="fas fa-microphone-alt me-2"></i>
-                            <span id="statusText">Ready to listen...</span>
-                        </div>
-                        
-                        <!-- Controls -->
-                        <div class="text-center mb-4">
-                            <button id="readAloudBtn" class="btn btn-success btn-lg me-2" disabled>
-                                <i class="fas fa-volume-up me-2"></i>Read Aloud
-                            </button>
-                            <button id="clearBtn" class="btn btn-outline-danger btn-lg">
-                                <i class="fas fa-trash me-2"></i>Clear
-                            </button>
-                        </div>
-                        
-                        <!-- Braille Output -->
-                        <div class="mb-3">
-                            <label class="form-label fw-bold">Braille Output:</label>
-                            <div id="brailleOutput" class="braille-display p-3 bg-light rounded border">
-                                <span class="text-muted">
-                                    <i class="fas fa-braille me-2"></i>Braille text will appear here...
-                                </span>
-                            </div>
-                        </div>
-                        
-                        <!-- Character Mapping -->
-                        <div id="characterMapping" class="character-mapping d-none">
-                            <label class="form-label fw-bold">Character Mapping:</label>
-                            <div id="mappingDisplay" class="mapping-display p-3 bg-light rounded border">
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-</section>
-{% endblock %}
-
-{% block extra_scripts %}
-<script src="{{ url_for('static', filename='js/text_to_braille.js') }}"></script>
-<script>
-// Legacy compatibility - remove existing inline script
-/*
 class TextToBrailleConverter {
     constructor() {
         this.textInput = document.getElementById('textInput');
@@ -126,14 +15,34 @@ class TextToBrailleConverter {
         this.characterMapping = document.getElementById('characterMapping');
         this.mappingDisplay = document.getElementById('mappingDisplay');
         
+        // Language support
+        this.currentLanguage = 'english';
+        this.languageSelector = document.querySelector('input[name="language"]:checked');
+        
+        // Speech recognition
         this.recognition = null;
-        this.synth = window.speechSynthesis;
         this.isListening = false;
+        
+        // TTS systems
+        this.synth = window.speechSynthesis;
+        this.isAndroidWebView = this.detectAndroidWebView();
         
         this.initializeEvents();
         this.setupSpeechRecognition();
+        this.setupLanguageSelector();
     }
     
+    /**
+     * Detect if running in Android WebView
+     */
+    detectAndroidWebView() {
+        return typeof window.AndroidInterface !== 'undefined' && 
+               typeof window.AndroidInterface.speakText === 'function';
+    }
+    
+    /**
+     * Initialize event listeners
+     */
     initializeEvents() {
         this.textInput.addEventListener('input', () => this.convertText());
         this.micButton.addEventListener('click', () => this.toggleVoiceRecognition());
@@ -141,6 +50,29 @@ class TextToBrailleConverter {
         this.clearBtn.addEventListener('click', () => this.clearAll());
     }
     
+    /**
+     * Setup language selector if available
+     */
+    setupLanguageSelector() {
+        const languageRadios = document.querySelectorAll('input[name="language"]');
+        languageRadios.forEach(radio => {
+            radio.addEventListener('change', () => {
+                this.currentLanguage = radio.value;
+                this.updateSpeechRecognitionLanguage();
+                this.convertText(); // Re-convert with new language
+            });
+        });
+        
+        // Set initial language
+        const checkedRadio = document.querySelector('input[name="language"]:checked');
+        if (checkedRadio) {
+            this.currentLanguage = checkedRadio.value;
+        }
+    }
+    
+    /**
+     * Setup speech recognition with multi-language support
+     */
     setupSpeechRecognition() {
         if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
             const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
@@ -148,7 +80,7 @@ class TextToBrailleConverter {
             
             this.recognition.continuous = false;
             this.recognition.interimResults = true;
-            this.recognition.lang = 'en-US';
+            this.updateSpeechRecognitionLanguage();
             
             this.recognition.onstart = () => {
                 this.isListening = true;
@@ -172,7 +104,7 @@ class TextToBrailleConverter {
                 if (finalTranscript) {
                     this.textInput.value = finalTranscript;
                     this.convertText();
-                    this.showVoiceStatus('Voice recognition completed!');
+                    this.showVoiceStatus('Voice recognition completed!', 'success');
                 } else {
                     this.showVoiceStatus(`Listening... "${interimTranscript}"`);
                 }
@@ -181,7 +113,26 @@ class TextToBrailleConverter {
             this.recognition.onerror = (event) => {
                 this.isListening = false;
                 this.updateMicButton();
-                this.showVoiceStatus(`Error: ${event.error}`, 'danger');
+                let errorMessage = 'Voice recognition error';
+                
+                switch (event.error) {
+                    case 'no-speech':
+                        errorMessage = 'No speech detected. Try again.';
+                        break;
+                    case 'audio-capture':
+                        errorMessage = 'Microphone not available.';
+                        break;
+                    case 'not-allowed':
+                        errorMessage = 'Microphone permission denied.';
+                        break;
+                    case 'network':
+                        errorMessage = 'Network error. Check connection.';
+                        break;
+                    default:
+                        errorMessage = `Error: ${event.error}`;
+                }
+                
+                this.showVoiceStatus(errorMessage, 'danger');
                 setTimeout(() => this.hideVoiceStatus(), 3000);
             };
             
@@ -196,16 +147,35 @@ class TextToBrailleConverter {
         }
     }
     
+    /**
+     * Update speech recognition language based on current selection
+     */
+    updateSpeechRecognitionLanguage() {
+        if (this.recognition) {
+            this.recognition.lang = this.currentLanguage === 'hindi' ? 'hi-IN' : 'en-US';
+        }
+    }
+    
+    /**
+     * Toggle voice recognition
+     */
     toggleVoiceRecognition() {
         if (!this.recognition) return;
         
         if (this.isListening) {
             this.recognition.stop();
         } else {
+            // Request microphone permission for Android WebView
+            if (this.isAndroidWebView && typeof window.AndroidInterface.requestMicrophonePermission === 'function') {
+                window.AndroidInterface.requestMicrophonePermission();
+            }
             this.recognition.start();
         }
     }
     
+    /**
+     * Update microphone button appearance
+     */
     updateMicButton() {
         if (this.isListening) {
             this.micButton.classList.add('btn-danger');
@@ -220,16 +190,25 @@ class TextToBrailleConverter {
         }
     }
     
+    /**
+     * Show voice status message
+     */
     showVoiceStatus(message, type = 'info') {
         this.statusText.textContent = message;
         this.voiceStatus.className = `alert alert-${type}`;
         this.voiceStatus.classList.remove('d-none');
     }
     
+    /**
+     * Hide voice status message
+     */
     hideVoiceStatus() {
         this.voiceStatus.classList.add('d-none');
     }
     
+    /**
+     * Convert text to Braille using backend API
+     */
     async convertText() {
         const text = this.textInput.value.trim();
         
@@ -248,7 +227,7 @@ class TextToBrailleConverter {
                 },
                 body: JSON.stringify({
                     text: text,
-                    language: 'english'
+                    language: this.currentLanguage
                 })
             });
             
@@ -266,6 +245,9 @@ class TextToBrailleConverter {
         }
     }
     
+    /**
+     * Display Braille conversion result
+     */
     displayBrailleResult(brailleText, originalText) {
         this.brailleOutput.innerHTML = `<span class="braille-text">${brailleText}</span>`;
         
@@ -286,45 +268,136 @@ class TextToBrailleConverter {
         this.characterMapping.classList.remove('d-none');
     }
     
-    readAloud() {
+    /**
+     * Enhanced Text-to-Speech with multiple fallback systems
+     */
+    async readAloud() {
         const text = this.textInput.value.trim();
         if (!text) return;
         
         // Stop any ongoing speech
-        this.synth.cancel();
+        this.stopSpeech();
+        
+        const language = this.currentLanguage === 'hindi' ? 'hi-IN' : 'en-US';
+        
+        // Try Android WebView interface first
+        if (this.isAndroidWebView) {
+            try {
+                window.AndroidInterface.speakText(text, language);
+                this.updateReadAloudButton(true);
+                return;
+            } catch (error) {
+                console.warn('Android TTS failed, falling back to web APIs:', error);
+            }
+        }
+        
+        // Try Edge TTS (Microsoft Azure Speech SDK) if available
+        if (typeof speechSynthesis !== 'undefined' && this.tryEdgeTTS(text, language)) {
+            return;
+        }
+        
+        // Fallback to Web Speech API
+        this.useWebSpeechTTS(text, language);
+    }
+    
+    /**
+     * Try Edge TTS implementation
+     */
+    tryEdgeTTS(text, language) {
+        // Edge TTS would require the Microsoft Cognitive Services Speech SDK
+        // For now, this is a placeholder for future implementation
+        // You would need to include the SDK and implement proper authentication
+        
+        // Example implementation would be:
+        // const speechConfig = SpeechConfig.fromSubscription("YourSubscriptionKey", "YourRegion");
+        // const synthesizer = new SpeechSynthesizer(speechConfig);
+        
+        return false; // Not implemented yet
+    }
+    
+    /**
+     * Use Web Speech API for TTS
+     */
+    useWebSpeechTTS(text, language) {
+        if (!this.synth) {
+            this.showError('Text-to-speech not supported in this browser');
+            return;
+        }
         
         const utterance = new SpeechSynthesisUtterance(text);
+        utterance.lang = language;
         utterance.rate = 0.8;
         utterance.pitch = 1;
         utterance.volume = 1;
         
         utterance.onstart = () => {
-            this.readAloudBtn.disabled = true;
-            this.readAloudBtn.innerHTML = '<i class="fas fa-stop me-2"></i>Speaking...';
+            this.updateReadAloudButton(true);
         };
         
         utterance.onend = () => {
-            this.readAloudBtn.disabled = false;
-            this.readAloudBtn.innerHTML = '<i class="fas fa-volume-up me-2"></i>Read Aloud';
+            this.updateReadAloudButton(false);
+        };
+        
+        utterance.onerror = (event) => {
+            console.error('TTS error:', event.error);
+            this.updateReadAloudButton(false);
+            this.showError('Text-to-speech failed. Please try again.');
         };
         
         this.synth.speak(utterance);
     }
     
+    /**
+     * Stop all speech synthesis
+     */
+    stopSpeech() {
+        // Stop Web Speech API
+        if (this.synth) {
+            this.synth.cancel();
+        }
+        
+        // Stop Android WebView TTS
+        if (this.isAndroidWebView && typeof window.AndroidInterface.stopSpeech === 'function') {
+            window.AndroidInterface.stopSpeech();
+        }
+        
+        this.updateReadAloudButton(false);
+    }
+    
+    /**
+     * Update read aloud button state
+     */
+    updateReadAloudButton(isSpeaking) {
+        if (isSpeaking) {
+            this.readAloudBtn.disabled = true;
+            this.readAloudBtn.innerHTML = '<i class="fas fa-stop me-2"></i>Speaking...';
+        } else {
+            this.readAloudBtn.disabled = false;
+            this.readAloudBtn.innerHTML = '<i class="fas fa-volume-up me-2"></i>Read Aloud';
+        }
+    }
+    
+    /**
+     * Clear all input and output
+     */
     clearAll() {
         this.textInput.value = '';
         this.brailleOutput.innerHTML = '<span class="text-muted"><i class="fas fa-braille me-2"></i>Braille text will appear here...</span>';
         this.readAloudBtn.disabled = true;
         this.characterMapping.classList.add('d-none');
         this.hideVoiceStatus();
-        this.synth.cancel();
+        this.stopSpeech();
     }
     
+    /**
+     * Show error message
+     */
     showError(message) {
         this.brailleOutput.innerHTML = `<span class="text-danger"><i class="fas fa-exclamation-triangle me-2"></i>${message}</span>`;
     }
 }
 
-*/
-</script>
-{% endblock %}
+// Initialize the converter when the page loads
+document.addEventListener('DOMContentLoaded', () => {
+    new TextToBrailleConverter();
+});
