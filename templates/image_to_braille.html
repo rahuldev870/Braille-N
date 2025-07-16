@@ -139,8 +139,11 @@ class ImageToBrailleConverter {
         
         this.synth = window.speechSynthesis;
         this.selectedFile = null;
+        this.isTTSActive = false;
+        this.voices = [];
         
         this.initializeEvents();
+        this.setupAdvancedTTS();
     }
     
     initializeEvents() {
@@ -157,6 +160,18 @@ class ImageToBrailleConverter {
         
         // Read aloud button
         this.readExtractedBtn.addEventListener('click', () => this.readExtractedText());
+    }
+    
+    setupAdvancedTTS() {
+        // Check for available voices and set up TTS capabilities
+        if ('speechSynthesis' in window) {
+            this.synth.onvoiceschanged = () => {
+                this.voices = this.synth.getVoices();
+            };
+            
+            // Initialize voices if already available
+            this.voices = this.synth.getVoices();
+        }
     }
     
     handleDragOver(e) {
@@ -287,29 +302,82 @@ class ImageToBrailleConverter {
         const text = this.extractedText.textContent.trim();
         if (!text) return;
         
+        // Toggle TTS if already active
+        if (this.isTTSActive) {
+            this.stopTTS();
+            return;
+        }
+        
         // Stop any ongoing speech
         this.synth.cancel();
         
         const utterance = new SpeechSynthesisUtterance(text);
         const language = this.getSelectedLanguage();
         
-        // Set language for speech synthesis
-        utterance.lang = language === 'hindi' ? 'hi-IN' : 'en-US';
+        // Enhanced voice selection based on language
+        this.setOptimalVoice(utterance, language);
+        
         utterance.rate = 0.8;
         utterance.pitch = 1;
         utterance.volume = 1;
         
         utterance.onstart = () => {
-            this.readExtractedBtn.disabled = true;
-            this.readExtractedBtn.innerHTML = '<i class="fas fa-stop me-2"></i>Speaking...';
+            this.isTTSActive = true;
+            this.readExtractedBtn.disabled = false;
+            this.readExtractedBtn.className = 'btn btn-success btn-tts-active';
+            this.readExtractedBtn.innerHTML = '<i class="fas fa-stop me-2"></i>Stop Speaking';
         };
         
         utterance.onend = () => {
-            this.readExtractedBtn.disabled = false;
+            this.isTTSActive = false;
+            this.readExtractedBtn.className = 'btn btn-outline-success';
+            this.readExtractedBtn.innerHTML = '<i class="fas fa-volume-up me-2"></i>Read Aloud';
+        };
+        
+        utterance.onerror = (event) => {
+            console.error('TTS Error:', event.error);
+            this.isTTSActive = false;
+            this.readExtractedBtn.className = 'btn btn-outline-success';
             this.readExtractedBtn.innerHTML = '<i class="fas fa-volume-up me-2"></i>Read Aloud';
         };
         
         this.synth.speak(utterance);
+    }
+    
+    setOptimalVoice(utterance, language) {
+        if (!this.voices || this.voices.length === 0) {
+            this.voices = this.synth.getVoices();
+        }
+        
+        let selectedVoice = null;
+        
+        if (language === 'hindi') {
+            // Prefer Hindi voices
+            selectedVoice = this.voices.find(voice => 
+                voice.lang === 'hi-IN' || voice.lang.startsWith('hi')
+            );
+            utterance.lang = 'hi-IN';
+        } else {
+            // Prefer English voices
+            selectedVoice = this.voices.find(voice => 
+                voice.lang === 'en-US' || voice.lang.startsWith('en')
+            );
+            utterance.lang = 'en-US';
+        }
+        
+        if (selectedVoice) {
+            utterance.voice = selectedVoice;
+            console.log('Selected voice:', selectedVoice.name, selectedVoice.lang);
+        } else {
+            console.log('Using default voice for', utterance.lang);
+        }
+    }
+    
+    stopTTS() {
+        this.synth.cancel();
+        this.isTTSActive = false;
+        this.readExtractedBtn.className = 'btn btn-outline-success';
+        this.readExtractedBtn.innerHTML = '<i class="fas fa-volume-up me-2"></i>Read Aloud';
     }
     
     showLoading() {

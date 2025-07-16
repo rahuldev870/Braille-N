@@ -25,6 +25,22 @@
                     </div>
                     
                     <div class="card-body p-4">
+                        <!-- Language Selection -->
+                        <div class="mb-4">
+                            <label class="form-label fw-bold">Select Language:</label>
+                            <div class="btn-group w-100" role="group">
+                                <input type="radio" class="btn-check" name="textLanguage" id="englishTextLang" value="english" checked>
+                                <label class="btn btn-outline-primary" for="englishTextLang">
+                                    <i class="fas fa-flag me-2"></i>English
+                                </label>
+                                
+                                <input type="radio" class="btn-check" name="textLanguage" id="hindiTextLang" value="hindi">
+                                <label class="btn btn-outline-primary" for="hindiTextLang">
+                                    <i class="fas fa-flag me-2"></i>हिंदी (Hindi)
+                                </label>
+                            </div>
+                        </div>
+
                         <!-- Input Section -->
                         <div class="mb-4">
                             <label for="textInput" class="form-label fw-bold">Enter Text:</label>
@@ -57,6 +73,40 @@
                         <div id="voiceStatus" class="alert alert-info d-none mb-3">
                             <i class="fas fa-microphone-alt me-2"></i>
                             <span id="statusText">Ready to listen...</span>
+                        </div>
+
+                        <!-- Google Assistant Style Voice Modal -->
+                        <div id="voiceModal" class="modal fade" tabindex="-1" aria-hidden="true">
+                            <div class="modal-dialog modal-dialog-centered modal-sm">
+                                <div class="modal-content border-0 shadow-lg">
+                                    <div class="modal-body text-center p-5">
+                                        <div class="voice-animation mb-4">
+                                            <div class="pulse-container">
+                                                <div class="pulse-dot"></div>
+                                                <div class="pulse-ring"></div>
+                                                <div class="pulse-ring-2"></div>
+                                            </div>
+                                        </div>
+                                        
+                                        <div class="google-logo mb-3">
+                                            <svg width="74" height="24" viewBox="0 0 74 24" fill="none">
+                                                <path d="M9.24 8.19v2.46h5.88c-.18 1.38-.64 2.39-1.34 3.1-.86.86-2.2 1.8-4.54 1.8-3.62 0-6.45-2.92-6.45-6.54s2.83-6.54 6.45-6.54c1.95 0 3.38.77 4.43 1.76L15.4 2.5C13.94 1.08 11.98 0 9.24 0 4.28 0 .11 4.04.11 9s4.17 9 9.13 9c2.68 0 4.7-.88 6.28-2.52 1.62-1.62 2.13-3.91 2.13-5.75 0-.57-.04-1.10-.13-1.54H9.24z" fill="#4285F4"/>
+                                                <path d="M25 6.19c-3.21 0-5.83 2.44-5.83 5.81 0 3.34 2.62 5.81 5.83 5.81s5.83-2.47 5.83-5.81c0-3.37-2.62-5.81-5.83-5.81zm0 9.33c-1.76 0-3.28-1.45-3.28-3.52 0-2.09 1.52-3.52 3.28-3.52s3.28 1.43 3.28 3.52c0 2.07-1.52 3.52-3.28 3.52z" fill="#EA4335"/>
+                                                <path d="M53.58 6.19c-3.21 0-5.83 2.44-5.83 5.81 0 3.34 2.62 5.81 5.83 5.81s5.83-2.47 5.83-5.81c0-3.37-2.62-5.81-5.83-5.81zm0 9.33c-1.76 0-3.28-1.45-3.28-3.52 0-2.09 1.52-3.52 3.28-3.52s3.28 1.43 3.28 3.52c0 2.07-1.52 3.52-3.28 3.52z" fill="#FBBC05"/>
+                                                <path d="M42.42 6.19c-3.21 0-5.83 2.44-5.83 5.81 0 3.34 2.62 5.81 5.83 5.81s5.83-2.47 5.83-5.81c0-3.37-2.62-5.81-5.83-5.81zm0 9.33c-1.76 0-3.28-1.45-3.28-3.52 0-2.09 1.52-3.52 3.28-3.52s3.28 1.43 3.28 3.52c0 2.07-1.52 3.52-3.28 3.52z" fill="#34A853"/>
+                                                <path d="M71.84 6.19c-3.21 0-5.83 2.44-5.83 5.81 0 3.34 2.62 5.81 5.83 5.81s5.83-2.47 5.83-5.81c0-3.37-2.62-5.81-5.83-5.81zm0 9.33c-1.76 0-3.28-1.45-3.28-3.52 0-2.09 1.52-3.52 3.28-3.52s3.28 1.43 3.28 3.52c0 2.07-1.52 3.52-3.28 3.52z" fill="#EA4335"/>
+                                            </svg>
+                                        </div>
+                                        
+                                        <h5 id="voiceModalTitle" class="mb-2">Listening...</h5>
+                                        <p id="voiceModalStatus" class="text-muted small mb-0">Try saying something</p>
+                                        
+                                        <div class="mt-4">
+                                            <span id="languageIndicator" class="badge bg-primary">English (United States)</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                         
                         <!-- Controls -->
@@ -107,12 +157,21 @@ class TextToBrailleConverter {
         this.characterMapping = document.getElementById('characterMapping');
         this.mappingDisplay = document.getElementById('mappingDisplay');
         
+        // Enhanced voice modal elements
+        this.voiceModal = document.getElementById('voiceModal');
+        this.voiceModalTitle = document.getElementById('voiceModalTitle');
+        this.voiceModalStatus = document.getElementById('voiceModalStatus');
+        this.languageIndicator = document.getElementById('languageIndicator');
+        
         this.recognition = null;
         this.synth = window.speechSynthesis;
         this.isListening = false;
+        this.isTTSActive = false;
+        this.currentLanguage = 'english';
         
         this.initializeEvents();
         this.setupSpeechRecognition();
+        this.setupAdvancedTTS();
     }
     
     initializeEvents() {
@@ -120,6 +179,15 @@ class TextToBrailleConverter {
         this.micButton.addEventListener('click', () => this.toggleVoiceRecognition());
         this.readAloudBtn.addEventListener('click', () => this.readAloud());
         this.clearBtn.addEventListener('click', () => this.clearAll());
+        
+        // Language selection events
+        document.querySelectorAll('input[name="textLanguage"]').forEach(radio => {
+            radio.addEventListener('change', () => {
+                this.currentLanguage = radio.value;
+                this.updateLanguageSettings();
+                this.convertText();
+            });
+        });
     }
     
     setupSpeechRecognition() {
@@ -129,11 +197,12 @@ class TextToBrailleConverter {
             
             this.recognition.continuous = false;
             this.recognition.interimResults = true;
-            this.recognition.lang = 'en-US';
+            this.recognition.lang = this.currentLanguage === 'hindi' ? 'hi-IN' : 'en-US';
             
             this.recognition.onstart = () => {
                 this.isListening = true;
                 this.updateMicButton();
+                this.showVoiceModal();
                 this.showVoiceStatus('Listening... Speak now!');
             };
             
@@ -153,27 +222,108 @@ class TextToBrailleConverter {
                 if (finalTranscript) {
                     this.textInput.value = finalTranscript;
                     this.convertText();
-                    this.showVoiceStatus('Voice recognition completed!');
+                    this.updateVoiceModal('Speech recognized!', 'Processing...', 'success');
+                    setTimeout(() => this.hideVoiceModal(), 1500);
                 } else {
-                    this.showVoiceStatus(`Listening... "${interimTranscript}"`);
+                    this.updateVoiceModal('Listening...', `"${interimTranscript}"`, 'listening');
                 }
             };
             
             this.recognition.onerror = (event) => {
                 this.isListening = false;
                 this.updateMicButton();
-                this.showVoiceStatus(`Error: ${event.error}`, 'danger');
-                setTimeout(() => this.hideVoiceStatus(), 3000);
+                this.updateVoiceModal('Error', `Recognition failed: ${event.error}`, 'error');
+                setTimeout(() => this.hideVoiceModal(), 3000);
             };
             
             this.recognition.onend = () => {
                 this.isListening = false;
                 this.updateMicButton();
-                setTimeout(() => this.hideVoiceStatus(), 2000);
+                if (this.voiceModal.style.display !== 'none') {
+                    setTimeout(() => this.hideVoiceModal(), 1000);
+                }
             };
         } else {
             this.micButton.disabled = true;
             this.micButton.title = 'Voice recognition not supported in this browser';
+        }
+    }
+    
+    setupAdvancedTTS() {
+        // Check for available voices and set up TTS capabilities
+        if ('speechSynthesis' in window) {
+            this.synth.onvoiceschanged = () => {
+                this.voices = this.synth.getVoices();
+                this.setupVoiceSelection();
+            };
+            
+            // Initialize voices if already available
+            this.voices = this.synth.getVoices();
+            if (this.voices.length > 0) {
+                this.setupVoiceSelection();
+            }
+        }
+    }
+    
+    setupVoiceSelection() {
+        this.englishVoices = this.voices.filter(voice => 
+            voice.lang.startsWith('en') || voice.lang.includes('en-US') || voice.lang.includes('en-GB')
+        );
+        
+        this.hindiVoices = this.voices.filter(voice => 
+            voice.lang.startsWith('hi') || voice.lang.includes('hi-IN')
+        );
+        
+        console.log('Available English voices:', this.englishVoices.length);
+        console.log('Available Hindi voices:', this.hindiVoices.length);
+    }
+    
+    updateLanguageSettings() {
+        if (this.recognition) {
+            this.recognition.lang = this.currentLanguage === 'hindi' ? 'hi-IN' : 'en-US';
+        }
+        
+        const langText = this.currentLanguage === 'hindi' ? 'हिंदी (भारत)' : 'English (United States)';
+        this.languageIndicator.textContent = langText;
+    }
+    
+    showVoiceModal() {
+        this.voiceModal.style.display = 'block';
+        this.voiceModal.classList.add('show');
+        this.voiceModal.setAttribute('aria-hidden', 'false');
+        
+        // Add backdrop
+        const backdrop = document.createElement('div');
+        backdrop.className = 'modal-backdrop fade show voice-modal-overlay';
+        backdrop.id = 'voiceModalBackdrop';
+        document.body.appendChild(backdrop);
+        
+        this.updateVoiceModal('Listening...', 'Try saying something', 'listening');
+    }
+    
+    hideVoiceModal() {
+        this.voiceModal.style.display = 'none';
+        this.voiceModal.classList.remove('show');
+        this.voiceModal.setAttribute('aria-hidden', 'true');
+        
+        // Remove backdrop
+        const backdrop = document.getElementById('voiceModalBackdrop');
+        if (backdrop) {
+            backdrop.remove();
+        }
+    }
+    
+    updateVoiceModal(title, status, type) {
+        this.voiceModalTitle.textContent = title;
+        this.voiceModalStatus.textContent = status;
+        
+        const pulseContainer = document.querySelector('.pulse-container');
+        if (type === 'success') {
+            pulseContainer.style.opacity = '0.7';
+        } else if (type === 'error') {
+            pulseContainer.style.opacity = '0.3';
+        } else {
+            pulseContainer.style.opacity = '1';
         }
     }
     
@@ -189,13 +339,11 @@ class TextToBrailleConverter {
     
     updateMicButton() {
         if (this.isListening) {
-            this.micButton.classList.add('btn-danger');
-            this.micButton.classList.remove('btn-outline-primary');
+            this.micButton.className = 'btn btn-danger mic-button-listening';
             this.micButton.innerHTML = '<i class="fas fa-stop"></i>';
             this.micButton.title = 'Click to stop listening';
         } else {
-            this.micButton.classList.remove('btn-danger');
-            this.micButton.classList.add('btn-outline-primary');
+            this.micButton.className = 'btn btn-outline-primary';
             this.micButton.innerHTML = '<i class="fas fa-microphone"></i>';
             this.micButton.title = 'Click to start voice recognition';
         }
@@ -229,7 +377,7 @@ class TextToBrailleConverter {
                 },
                 body: JSON.stringify({
                     text: text,
-                    language: 'english'
+                    language: this.currentLanguage
                 })
             });
             
@@ -271,25 +419,81 @@ class TextToBrailleConverter {
         const text = this.textInput.value.trim();
         if (!text) return;
         
+        // Toggle TTS if already active
+        if (this.isTTSActive) {
+            this.stopTTS();
+            return;
+        }
+        
         // Stop any ongoing speech
         this.synth.cancel();
         
         const utterance = new SpeechSynthesisUtterance(text);
+        
+        // Enhanced voice selection based on language
+        this.setOptimalVoice(utterance);
+        
         utterance.rate = 0.8;
         utterance.pitch = 1;
         utterance.volume = 1;
         
         utterance.onstart = () => {
-            this.readAloudBtn.disabled = true;
-            this.readAloudBtn.innerHTML = '<i class="fas fa-stop me-2"></i>Speaking...';
+            this.isTTSActive = true;
+            this.readAloudBtn.disabled = false;
+            this.readAloudBtn.className = 'btn btn-success btn-lg me-2 btn-tts-active';
+            this.readAloudBtn.innerHTML = '<i class="fas fa-stop me-2"></i>Stop Speaking';
         };
         
         utterance.onend = () => {
-            this.readAloudBtn.disabled = false;
+            this.isTTSActive = false;
+            this.readAloudBtn.className = 'btn btn-success btn-lg me-2';
+            this.readAloudBtn.innerHTML = '<i class="fas fa-volume-up me-2"></i>Read Aloud';
+        };
+        
+        utterance.onerror = (event) => {
+            console.error('TTS Error:', event.error);
+            this.isTTSActive = false;
+            this.readAloudBtn.className = 'btn btn-success btn-lg me-2';
             this.readAloudBtn.innerHTML = '<i class="fas fa-volume-up me-2"></i>Read Aloud';
         };
         
         this.synth.speak(utterance);
+    }
+    
+    setOptimalVoice(utterance) {
+        if (!this.voices || this.voices.length === 0) {
+            this.voices = this.synth.getVoices();
+        }
+        
+        let selectedVoice = null;
+        
+        if (this.currentLanguage === 'hindi') {
+            // Prefer Hindi voices
+            selectedVoice = this.hindiVoices.find(voice => 
+                voice.lang === 'hi-IN' || voice.lang.startsWith('hi')
+            );
+            utterance.lang = 'hi-IN';
+        } else {
+            // Prefer English voices
+            selectedVoice = this.englishVoices.find(voice => 
+                voice.lang === 'en-US' || voice.lang.startsWith('en')
+            );
+            utterance.lang = 'en-US';
+        }
+        
+        if (selectedVoice) {
+            utterance.voice = selectedVoice;
+            console.log('Selected voice:', selectedVoice.name, selectedVoice.lang);
+        } else {
+            console.log('Using default voice for', utterance.lang);
+        }
+    }
+    
+    stopTTS() {
+        this.synth.cancel();
+        this.isTTSActive = false;
+        this.readAloudBtn.className = 'btn btn-success btn-lg me-2';
+        this.readAloudBtn.innerHTML = '<i class="fas fa-volume-up me-2"></i>Read Aloud';
     }
     
     clearAll() {
@@ -298,7 +502,12 @@ class TextToBrailleConverter {
         this.readAloudBtn.disabled = true;
         this.characterMapping.classList.add('d-none');
         this.hideVoiceStatus();
-        this.synth.cancel();
+        this.stopTTS();
+        this.hideVoiceModal();
+        
+        // Reset button states
+        this.readAloudBtn.className = 'btn btn-success btn-lg me-2';
+        this.readAloudBtn.innerHTML = '<i class="fas fa-volume-up me-2"></i>Read Aloud';
     }
     
     showError(message) {
