@@ -25,22 +25,6 @@
                     </div>
                     
                     <div class="card-body p-4">
-                        <!-- Language Selector -->
-                        <div class="mb-4">
-                            <label class="form-label fw-bold">Select Language:</label>
-                            <div class="btn-group w-100" role="group">
-                                <input type="radio" class="btn-check" name="language" id="englishLang" value="english" checked>
-                                <label class="btn btn-outline-primary" for="englishLang">
-                                    <i class="fas fa-flag me-2"></i>English
-                                </label>
-                                
-                                <input type="radio" class="btn-check" name="language" id="hindiLang" value="hindi">
-                                <label class="btn btn-outline-primary" for="hindiLang">
-                                    <i class="fas fa-flag me-2"></i>हिंदी (Hindi)
-                                </label>
-                            </div>
-                        </div>
-                        
                         <!-- Input Section -->
                         <div class="mb-4">
                             <label for="textInput" class="form-label fw-bold">Enter Text:</label>
@@ -110,10 +94,7 @@
 {% endblock %}
 
 {% block extra_scripts %}
-<script src="{{ url_for('static', filename='js/text_to_braille.js') }}"></script>
 <script>
-// Legacy compatibility - remove existing inline script
-/*
 class TextToBrailleConverter {
     constructor() {
         this.textInput = document.getElementById('textInput');
@@ -325,6 +306,9 @@ class TextToBrailleConverter {
     }
 }
 
-*/
+// Initialize the converter when the page loads
+document.addEventListener('DOMContentLoaded', () => {
+    new TextToBrailleConverter();
+});
 </script>
 {% endblock %}

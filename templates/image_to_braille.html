@@ -117,10 +117,7 @@
 {% endblock %}
 
 {% block extra_scripts %}
-<script src="{{ url_for('static', filename='js/image_to_braille.js') }}"></script>
 <script>
-// Legacy compatibility - script loaded from external file
-/*
 class ImageToBrailleConverter {
     constructor() {
         this.uploadArea = document.getElementById('uploadArea');
@@ -339,6 +336,9 @@ class ImageToBrailleConverter {
     }
 }
 
-*/
+// Initialize the converter when the page loads
+document.addEventListener('DOMContentLoaded', () => {
+    new ImageToBrailleConverter();
+});
 </script>
 {% endblock %}
