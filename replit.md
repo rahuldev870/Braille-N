@@ -34,13 +34,17 @@ A comprehensive Flask-based Braille accessibility web application providing adva
 
 ## Recent Changes
 
-### July 16, 2025 - Enhanced TTS/STT Implementation
-- ✅ Added Google Assistant-style voice modal with animated pulse effects
-- ✅ Implemented advanced TTS with language-specific voice selection
-- ✅ Enhanced CSS animations for voice interactions and button states
-- ✅ Added proper error handling and fallback mechanisms for speech features
-- ✅ Improved cross-platform compatibility for speech recognition
-- ✅ Added visual feedback for TTS and STT states with glow effects
+### July 16, 2025 - Comprehensive TTS/STT Fixes & Android WebView Support
+- ✅ Fixed Braille conversion API - now working properly with enhanced error handling
+- ✅ Fixed speech recognition to automatically convert recognized text to Braille
+- ✅ Added comprehensive Android WebView compatibility layer
+- ✅ Enhanced Google Assistant-style voice modal with improved animations
+- ✅ Implemented language-specific voice selection (English/Hindi) with fallback
+- ✅ Added proper error handling for speech recognition failures
+- ✅ Created Dockerfile for containerized deployment
+- ✅ Enhanced cross-platform compatibility for APK building in Android Studio
+- ✅ Added Android WebView JavaScript bridge for native speech integration
+- ✅ Improved TTS functionality with start/stop toggle and visual feedback
 
 ### Previous Updates
 - ✅ Complete Flask application structure with all core services
