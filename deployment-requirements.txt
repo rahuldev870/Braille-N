@@ -1,0 +1,17 @@
+# Braille World Application Dependencies
+# For deployment and containerization purposes
+
+Flask==3.0.0
+Flask-SQLAlchemy==3.1.1
+Werkzeug==3.0.1
+gunicorn==21.2.0
+Pillow==10.1.0
+pytesseract==0.3.10
+psycopg2-binary==2.9.9
+email-validator==2.1.0
+
+# Optional dependencies for enhanced functionality
+# Uncomment if needed for specific deployment environments
+# redis==5.0.1
+# celery==5.3.4
+# python-dotenv==1.0.0
